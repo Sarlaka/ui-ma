@@ -2,7 +2,7 @@
  * @Author: duchengdong
  * @Date: 2021-02-01 12:10:13
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-03 14:36:39
+ * @LastEditTime: 2021-02-03 16:52:51
  * @Description: 
  */
 /*
@@ -23,7 +23,7 @@ const {
     Circle
 } = Shape
 
-export const UserNodeSvg =  Graph.registerNode('user-node-svg', {
+export const UserNodeSvg = Graph.registerNode('user-node-svg', {
     inherit: 'circle',
     width: 120,
     height: 120,
@@ -42,20 +42,34 @@ export const UserNodeSvg =  Graph.registerNode('user-node-svg', {
                 }
             }
         },
-        fo: {
-            refWidth: '100%',
-            refHeight: '100%',
+        btn: {
+            refX: '100%',
+            refX2: -28,
+            y: 4,
+            width: 24,
+            height: 18,
+            rx: 10,
+            ry: 10,
+            fill: 'rgba(255,255,0,0.01)',
+            stroke: 'red',
+            cursor: 'pointer',
+            event: 'node:delete',
+            visibility: 'visible'
         },
-        foBody: {
-            xmlns: Dom.ns.xhtml,
-            style: {
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-            },
-        }
+        // fo: {
+        //     refWidth: '100%',
+        //     refHeight: '100%',
+        // },
+        // foBody: {
+        //     xmlns: Dom.ns.xhtml,
+        //     style: {
+        //         width: '100%',
+        //         height: '100%',
+        //         display: 'flex',
+        //         justifyContent: 'center',
+        //         alignItems: 'center',
+        //     },
+        // }
     },
     markup: [{
             tagName: 'circle',
@@ -64,6 +78,10 @@ export const UserNodeSvg =  Graph.registerNode('user-node-svg', {
         {
             tagName: 'text',
             selector: 'text',
+        },
+        {
+            tagName: 'rect',
+            selector: 'btn',
         },
         {
             tagName: 'foreignObject',

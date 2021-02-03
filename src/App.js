@@ -2,12 +2,12 @@
  * @Author: duchengdong
  * @Date: 2021-02-01 11:56:34
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-03 14:37:21
+ * @LastEditTime: 2021-02-03 17:18:55
  * @Description: 
  */
 import React,{useEffect,useRef, useState} from 'react';
 import ReactDOM from 'react-dom';
-import { Graph,Addon,Shape, Cell,Dom} from '@antv/x6';
+import { Graph,Addon,Shape, Cell,Dom,FunctionExt} from '@antv/x6';
 import { Tooltip } from 'antd';
 import 'antd/lib/tooltip/style/css';
 // 引入节点配置文件
@@ -31,6 +31,13 @@ function App() {
       snapline: {
         enabled: true,
         sharp: true,
+      },
+      selecting: {
+        enabled: true,
+        multiple: true,
+        rubberband: true,
+        movable: true,
+        showNodeSelectionBox: true,
       },
       scroller: {
         enabled: false,
@@ -74,54 +81,64 @@ function App() {
         },
       },
       connecting: {
-        snap: true,
-        allowBlank: false,
-        allowLoop: false,
-        highlight: true,
-        sourceAnchor: 'right',
-        targetAnchor: 'center',
+        anchor: 'center',
         connectionPoint: 'anchor',
+        allowBlank: false,
+        highlight: true,
+        snap: true,
         createEdge() {
-          return graph.createEdge({
-            router: {
-              name: 'manhattan',
-              args: { 
-                startDirections: ['right'],
-                endDirections: ['left'],
-              },
-            },
+          console.log(1)
+          return new Shape.Edge({
             attrs: {
               line: {
                 stroke: '#808080',
                 strokeWidth: 1,
-                targetMarker: 'classic',
+                targetMarker: {
+                  name: 'classic',
+                  size: 8,
+                },
               },
             },
+            router: {
+              name: 'manhattan',
+            },
+            zIndex: 0,
           })
         },
         validateMagnet({ magnet }) {
           return magnet.getAttribute('port-group') !== 'in'
         },
         validateConnection({ sourceView, targetView, sourceMagnet, targetMagnet }) {
-          // 只能从输出链接桩创建连接
-          if (!sourceMagnet || sourceMagnet.getAttribute('port-group') === 'in') {
+          // // 只能从输出链接桩创建连接
+          // if (!sourceMagnet || sourceMagnet.getAttribute('port-group') === 'in') {
+          //   return false
+          // }
+    
+          // // 只能连接到输入链接桩
+          // if (!targetMagnet || targetMagnet.getAttribute('port-group') !== 'in') {
+          //   return false
+          // }
+    
+          // // 判断目标链接桩是否可连接
+          // const portId = targetMagnet.getAttribute('port')
+          // const node = targetView.cell
+          // console.log(portId,node)
+          // const port = node.getPort(portId)
+          // if (port && port.connected) {
+          //   return false
+          // }
+    
+          // return true
+          
+          if (sourceView === targetView) {
             return false
           }
-    
-          // 只能连接到输入链接桩
-          if (!targetMagnet || targetMagnet.getAttribute('port-group') !== 'in') {
+          if (!sourceMagnet) {
             return false
           }
-    
-          // 判断目标链接桩是否可连接
-          const portId = targetMagnet.getAttribute('port')
-          const node = targetView.cell
-          console.log(portId,node)
-          const port = node.getPort(portId)
-          if (port && port.connected) {
+          if (!targetMagnet) {
             return false
           }
-    
           return true
         },
       },
@@ -129,6 +146,7 @@ function App() {
 
      // 连线事件
      graph.on('edge:connected', (args) => {
+      console.log('连线事件')
       const edge = args.edge
       const node = args.currentCell 
       const elem = args.currentMagnet
@@ -160,6 +178,58 @@ function App() {
       })
       node.setMarkup(markup)
     })
+
+
+    function showPorts(ports, show) {
+      for (let i = 0, len = ports.length; i < len; i = i + 1) {
+        ports[i].style.visibility = show ? 'visible' : 'hidden'
+      }
+    }
+    // 节点的鼠标移入事件
+    graph.on(
+      'node:mouseenter',
+      FunctionExt.debounce((args) => {
+        const ports = refContainer.current.querySelectorAll(
+          '.x6-port-body',
+        )
+        showPorts(ports, true)
+      }),
+      500,
+    )
+
+    // 节点鼠标移出事件
+    graph.on('node:mouseleave', () => {
+      const ports = refContainer.current.querySelectorAll(
+        '.x6-port-body',
+      )
+      showPorts(ports, false)
+    })
+
+    // 节点删除事件
+    graph.on('node:delete', ({ view, e }) => {
+      e.stopPropagation()
+      view.cell.remove()
+    })
+
+    // 边的鼠标移入事件
+    graph.on(
+      'edge:mouseenter',
+      (e) => {
+        e.cell.addTools({
+          name: 'button-remove',
+          // args: {
+          //   distance: -60
+          // },
+        })
+      },
+    )
+
+    graph.on(
+      'edge:mouseleave',
+      (e) => {
+        e.cell.removeTools()
+      },
+    )
 
     // 绘图
     const userNode1 = graph.addNode({
