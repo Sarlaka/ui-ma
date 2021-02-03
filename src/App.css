@@ -35,6 +35,34 @@
   justify-content: center;
 }
 
+/* 拖拽板样式 */
+.dnd-pannel {
+  width: 250px;
+  border: 1px solid #f0f0f0;
+  position: relative;
+  padding: 4px 24px;
+}
+
+.dnd-group {
+  padding: 12px 0;
+  border-bottom: 1px solid #EEF0F4;
+}
+
+.dnd-group-title {
+  font-size: 14px;
+  font-family: PingFangSC-Medium, PingFang SC;
+  font-weight: 500;
+  color: #272E42;
+  line-height: 24px;
+  margin-bottom: 24px;
+}
+
+.dnd-unit{
+  width: 60px;
+  height: 60px;
+  background: red;
+}
+
 /* 官方样式代码 */
 .x6-node [magnet="true"] {
   cursor: crosshair;

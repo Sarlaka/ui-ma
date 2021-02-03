@@ -2,7 +2,7 @@
  * @Author: duchengdong
  * @Date: 2021-02-01 12:10:13
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-01 17:19:48
+ * @LastEditTime: 2021-02-03 14:36:39
  * @Description: 
  */
 /*
@@ -14,10 +14,16 @@
  */
 import {
     Graph,
+    Shape,
     Dom
 } from '@antv/x6'
 
-export const UserNodeSvg = Graph.registerNode('user-node-svg', {
+const {
+    Rect,
+    Circle
+} = Shape
+
+export const UserNodeSvg =  Graph.registerNode('user-node-svg', {
     inherit: 'circle',
     width: 120,
     height: 120,

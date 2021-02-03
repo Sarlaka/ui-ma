@@ -2,23 +2,27 @@
  * @Author: duchengdong
  * @Date: 2021-02-01 11:56:34
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-02 11:58:41
+ * @LastEditTime: 2021-02-03 14:37:21
  * @Description: 
  */
-import React,{useEffect,useRef} from 'react';
+import React,{useEffect,useRef, useState} from 'react';
 import ReactDOM from 'react-dom';
-import { Graph,Addon,Shape, Cell} from '@antv/x6';
+import { Graph,Addon,Shape, Cell,Dom} from '@antv/x6';
 import { Tooltip } from 'antd';
 import 'antd/lib/tooltip/style/css';
 // 引入节点配置文件
-import './components/Graph';
+// import './components/Graph';
+import {DndUserNodeSvg} from './components/Graph/dndShape';
+import {UserNodeSvg} from './components/Graph/shape';
 import './App.css';
 
-const { Stencil } = Addon
+const {Dnd,Stencil } = Addon
 const { Rect, Circle } = Shape
 
 function App() {
   const refContainer = useRef(null)
+  const [graph,setGraph] = useState(null)
+  const [dnd,setDnd] = useState(null)
   const refStencil = useRef(null)
   useEffect(()=> {
     const graph = new Graph({
@@ -144,9 +148,16 @@ function App() {
 
     // 节点点击事件
     graph.on('node:click', ({ e, x, y, node, view }) => { 
-      console.log(node.markup)
       let markup = node.getMarkup()
-      markup[1].textContent = 2
+      const data = node.getData()
+      console.log(markup)
+      // markup[1].textContent = 2
+      markup = markup.map(m =>{
+        return m.selector == 'text'?{
+          ...m,
+          textContent: data.text
+        }:m
+      })
       node.setMarkup(markup)
     })
 
@@ -156,122 +167,65 @@ function App() {
       y: 100,
       shape: 'user-node-svg',
       data: {
-        text:2
+        text:4
       },
     })
 
-    // 拖拽控件
-    const stencil = new Stencil({
-      title:'组件',
+    // const userNode1 = UserNodeSvg().setData({
+    //   text:2
+    // })
+    // graph.addNode(userNode1)
+
+    // 拖拽相关
+    const dnd = new Dnd({
       target: graph,
-      collapsable: true,
-      stencilGraphWidth: 250,
-      stencilGraphHeight: 280,
-      groups: [
-        {
-          name: 'group1',
-          title: 'Group(Collapsable)',
-        },
-        {
-          name: 'group2',
-          title: 'Group',
-        },
-      ],
+      scaled: false,
+      animation: true,
+      validateNode(droppingNode, options) {
+        return droppingNode.shape === 'html'
+          ? new Promise((resolve) => {
+              const { draggingNode, draggingGraph } = options
+              const view = draggingGraph.findView(draggingNode)
+              const contentElem = view.findOne('foreignObject > body > div')
+              Dom.addClass(contentElem, 'validating')
+              setTimeout(() => {
+                Dom.removeClass(contentElem, 'validating')
+                resolve(true)
+              }, 3000)
+            })
+          : true
+      }
     })
 
-    refStencil.current.appendChild(stencil.container)
-
-    const r = new Rect({
-      width: 58,
-      height: 54,
-      attrs: {
-        g1: {
-          stroke: 'none',
-          strokeWidth: 1,
-          fill: '#4173FF',
-          fillRule: 'evenodd',
-        },
-        g2: {
-          transform: "translate(-1095.000000, -174.000000)",
-          fill: "#4173FF"
-        },
-        g3: {
-          transform: "translate(1090.000000, 168.000000)"
-        },
-        p1: {
-          d: "M9,6 L47.2772359,6 C48.7579587,6 50.1175462,6.8179916 50.8111929,8.12619435 L62.0129087,29.2523887 C63.2556899,31.5962473 63.2556899,34.4037527 62.0129087,36.7476113 L50.8111929,57.8738057 C50.1175462,59.1820084 48.7579587,60 47.2772359,60 L9,60 C6.790861,60 5,58.209139 5,56 L5,10 C5,7.790861 6.790861,6 9,6 Z"
-        }
-      },
-      markup: [{
-          tagName: 'g',
-          selector: 'g1',
-          children: [{
-            tagName: 'g',
-            selector: 'g2',
-            children: [{
-              tagName: 'g',
-              selector: 'g3',
-              children: [{
-                tagName: 'path',
-                selector: 'p1'
-              }]
-            }]
-          }]
-        }]
-    })
-
-    const c = new Circle({
-      width: 60,
-      height: 60,
-      attrs: {
-        circle: { fill: '#FE854F', strokeWidth: 6, stroke: '#4B4A67' },
-        text: { text: 'ellipse1', fill: 'white' },
-      },
-    })
-
-    const c2 = new Circle({
-      width: 60,
-      height: 60,
-      attrs: {
-        circle: { fill: '#4B4A67', 'stroke-width': 6, stroke: '#FE854F' },
-        text: { text: 'ellipse2', fill: 'white' },
-      },
-    })
-
-    const r2 = new Rect({
-      width: 70,
-      height: 40,
-      attrs: {
-        rect: { fill: '#4B4A67', stroke: '#31D0C6', strokeWidth: 6 },
-        text: { text: 'rect2', fill: 'white' },
-      },
-    })
-
-    const r3 = new Rect({
-      width: 70,
-      height: 40,
-      attrs: {
-        rect: { fill: '#31D0C6', stroke: '#4B4A67', strokeWidth: 6 },
-        text: { text: 'rect3', fill: 'white' },
-      },
-    })
-
-    const c3 = new Circle({
-      width: 60,
-      height: 60,
-      attrs: {
-        circle: { fill: '#FE854F', strokeWidth: 6, stroke: '#4B4A67' },
-        text: { text: 'ellipse3', fill: 'white' },
-      },
-    })
-
-    stencil.load([r, c, c2, r2.clone()], 'group1')
-    stencil.load([c2.clone(), r2, r3, c3], 'group2')
+    setGraph(graph)
+    setDnd(dnd)
+    
   },[])
+  const startDrag = (e) => {
+    const target = e.currentTarget
+    const type = target.getAttribute('data-type')
+    const node = graph.createNode({
+      shape: 'user-node-svg',
+      data: {
+        text:3
+      },
+    })
+
+    dnd.start(node, e.nativeEvent)
+  }
   return (
     <div id='container' className="app">
       <div className="app-content" ref={refContainer} />
-      <div className="app-stencil" ref={refStencil} />
+      {/* <div className="app-stencil" ref={refStencil} /> */}
+      <div className="dnd-pannel">
+        <div className="dnd-group">
+          <div className="dnd-group-title">对象</div>
+          <div className="dnd-group-box">
+            <div className="dnd-unit" onMouseDown={startDrag}>客户</div>
+            <div className="dnd-unit" onMouseDown={startDrag}>客户群</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

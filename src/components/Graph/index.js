@@ -5,5 +5,4 @@
  * @LastEditTime: 2021-02-02 11:14:46
  * @Description: 
  */
-import './dndShape';
 import './shape';
