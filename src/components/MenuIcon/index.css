@@ -1,0 +1,15 @@
+.single_menu_icon {
+  width: 72px;
+  text-align: center;
+  padding-top: 4px;
+}
+.single_menu_icon .mi_title {
+  height: 16px;
+  font-size: 12px;
+  font-family: PingFangSC-Regular, PingFang SC;
+  font-weight: 400;
+  color: #272E42;
+  line-height: 16px;
+  text-align: center;
+  margin-bottom: 7px;
+}

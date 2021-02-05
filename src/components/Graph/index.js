@@ -6,3 +6,6 @@
  * @Description: 
  */
 import './shape';
+import './customerEvent';
+import './sixAngle'
+import './pentagon'

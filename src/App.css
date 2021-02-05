@@ -174,3 +174,10 @@
   z-index: 10;
   box-sizing: border-box;
 }
+
+.dnd-group-box {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
