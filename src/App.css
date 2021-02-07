@@ -2,7 +2,6 @@
   font-family: sans-serif;
   padding: 0;
   display: flex;
-  padding: 16px 8px;
 }
 
 .app-stencil {
@@ -13,9 +12,7 @@
 
 .app-content {
   flex: 1;
-  height: 520px;
-  margin-left: 8px;
-  margin-right: 8px;
+  height: 100vh;
   box-shadow: 0 0 10px 1px #e9e9e9;
 }
 
@@ -48,6 +45,7 @@
   border: 1px solid #f0f0f0;
   position: relative;
   padding: 4px 24px;
+  overflow: auto;
 }
 
 .dnd-group {
@@ -64,7 +62,7 @@
   margin-bottom: 24px;
 }
 
-.dnd-unit{
+.dnd-unit {
   width: 60px;
   height: 60px;
   background: red;
@@ -180,4 +178,92 @@
   justify-content: space-around;
   align-items: flex-start;
   flex-wrap: wrap;
+}
+
+/* icon-shape */
+.x6-node foreignobject{
+  cursor: pointer;
+}
+
+.x6-node foreignobject>body {
+  padding-top: 19px;
+}
+
+.icon-shape {
+  display: block;
+  margin: 0 auto 8px;
+  width: 32px;
+  height: 32px;
+}
+
+.node-name {
+  color: #fff;
+  text-align: center;
+}
+
+.node-operator {
+  color: #fff;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.node-operator-box {
+  width: 110px;
+  height: 106px;
+  background: #FFFFFF;
+  box-shadow: 0px 4px 8px 0px #D4D7DE;
+  position: absolute;
+  left: 50%;
+  top: 27px;
+  transform: translate(-50%, 0);
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: PingFangSC-Regular, PingFang SC;
+  font-weight: 400;
+  color: #5E6576;
+  line-height: 28px;
+  text-align: center;
+  padding: 12px 0;
+  cursor: pointer;
+}
+
+.node-operator-box::before,
+.node-operator-box::after {
+  content: '';
+  display: block;
+  background: #FFFFFF;
+  position: absolute;
+}
+
+.node-operator-box::after {
+  width: 100%;
+  height: 12px;
+  left: 0;
+  top: 0;
+  border-radius: 5px;
+}
+
+.node-operator-box::before {
+  content: '';
+  display: block;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  box-shadow: 0px 3px 6px 0px #D4D7DE;
+  border-radius: 2px;
+  left: 50%;
+  top: 0px;
+}
+
+.node-operator-box-item:hover {
+  background: #ECF1FF;
+}
+
+.item-red {
+  color: #F16272;
+}
+
+.hide {
+  display: none;
 }

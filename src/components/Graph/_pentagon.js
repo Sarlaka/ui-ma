@@ -2,7 +2,7 @@
  * @Author: duchengdong
  * @Date: 2021-02-01 12:10:13
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-03 16:52:51
+ * @LastEditTime: 2021-02-05 17:41:24
  * @Description: 
  */
 import {
@@ -41,14 +41,10 @@ export const PentagonNodeSvg = Graph.registerNode('pentagon-node-svg', {
             }
         },
         bodyPath: {
-            d: 'M15,1.5 L111.597721,1.5 C113.076172,1.5 114.43406,2.31550651 115.128708,3.62060367 L144.999352,59.7412073 C146.250054,62.0910097 146.250054,64.9089903 144.999352,67.2587927 L115.128708,123.379396 C114.43406,124.684493 113.076172,125.5 111.597721,125.5 L15,125.5 C12.790861,125.5 11,123.709139 11,121.5 L11,5.5 C11,3.290861 12.790861,1.5 15,1.5 Z',
+            d: 'M4,0 L100.629034,0 C102.09092,-2.68544075e-16 103.436367,0.797502599 104.138087,2.07996125 L134.823205,58.1599225 C136.132398,60.5525961 136.132398,63.4474039 134.823205,65.8400775 L104.138087,121.920039 C103.436367,123.202497 102.09092,124 100.629034,124 L4,124 C1.790861,124 -2.81511679e-14,122.209139 -2.84217094e-14,120 L-2.84217094e-14,4 C-2.91363401e-14,1.790861 1.790861,4.05812251e-16 4,0 Z',
         },
         bodyg1: {
             fill: '#5BC9A4',
-            transform: 'translate(-54, -79)'
-        },
-        bodyg2: {
-            transform: 'translate(54, 79.5)',
         },
         btn: {
             refX: '100%',
@@ -64,13 +60,20 @@ export const PentagonNodeSvg = Graph.registerNode('pentagon-node-svg', {
             event: 'node:delete',
             visibility: 'visible'
         },
-        pathOuter: {
-          transform: 'translate(52,18)'
+        fo: {
+            width: 110,
+            height: 124
         },
-        iconPath: {
-          fill: 'white',
+        icon: {
+            class: 'icon-shape',
+            src: './assets/shapeIcon/user.png',
         },
+        name: {
+            class: 'node-name',
+            innerText: '2222'
+        }
     },
+    
     markup: [
         {
             tagName: 'g',
@@ -81,28 +84,12 @@ export const PentagonNodeSvg = Graph.registerNode('pentagon-node-svg', {
                     selector: 'bodyg1',
                     children: [
                         {
-                            tagName: 'g',
-                            selector: 'bodyg2',
-                            children: [
-                                {
-                                    tagName: 'path',
-                                    selector: 'bodyPath',
-                                },
-                            ]
-                        }
+                            tagName: 'path',
+                            selector: 'bodyPath',
+                        },
                     ]
                 }
             ]
-        },
-        {
-          tagName: 'g',
-          selector: 'pathOuter',
-          children: [
-            {
-              tagName: 'path',
-              selector: 'iconPath',
-            }
-          ]
         },
         {
             tagName: 'text',
@@ -112,15 +99,23 @@ export const PentagonNodeSvg = Graph.registerNode('pentagon-node-svg', {
             tagName: 'rect',
             selector: 'btn',
         },
-        // {
-        //     tagName: 'foreignObject',
-        //     selector: 'fo',
-        //     children: [{
-        //         ns: Dom.ns.xhtml,
-        //         tagName: 'body',
-        //         selector: 'foBody',
-        //     }, ],
-        // },
+        {
+            tagName: 'foreignObject',
+            selector: 'fo',
+            children: [{
+                ns: Dom.ns.xhtml,
+                tagName: 'body',
+                selector: 'foBody',
+                children: [{
+                    tagName: 'img',
+                    selector: 'icon'
+                },{
+                    tagName: 'div',
+                    selector: 'name',
+                    textContent: '111'
+                }]
+            }, ],
+        },
     ],
     ports: {
         groups: {

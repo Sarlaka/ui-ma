@@ -2,37 +2,49 @@
  * @Author: duchengdong
  * @Date: 2021-02-01 11:56:34
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-03 17:18:55
+ * @LastEditTime: 2021-02-07 20:55:37
  * @Description: 
  */
-import React,{useEffect,useRef, useState} from 'react';
-import ReactDOM from 'react-dom';
+import React,{Component} from 'react';
 import { Graph,Addon,Shape, Cell,Dom,FunctionExt} from '@antv/x6';
 import { Tooltip } from 'antd';
 import 'antd/lib/tooltip/style/css';
 // 引入节点配置文件
 // import './components/Graph';
-import {DndUserNodeSvg} from './components/Graph/dndShape';
-import {UserNodeSvg} from './components/Graph/shape';
-import {CustomerEventNodeSvg, SixAngleNodeSvg, PentagonNodeSvg} from './components/Graph';
-import MenuIcon from './components/MenuIcon';
+import createUserNode from './components/Node/createUserNode'
+import createEventNode from './components/Node/createEventNode'
+import createActionNode from './components/Node/createActionNode'
+import createLogicNode from './components/Node/createLogicNode'
+import DragNode from './components/DragNode'
+import {GROUP_USER,GROUP_EVENT,GROUP_ACTION,GROUP_LOGIC} from 'utils/constants'
 import './App.css';
 
 const {Dnd,Stencil } = Addon
 const { Rect, Circle } = Shape
 
-function App() {
-  const refContainer = useRef(null)
-  const [graph,setGraph] = useState(null)
-  const [dnd,setDnd] = useState(null)
-  const refStencil = useRef(null)
-  useEffect(()=> {
+class App extends Component {
+  constructor(props){
+    super(props)
+    this.state = {
+      graph:null,
+      dnd:null,
+      boxShow: false,
+      boxPosition: {
+        x: 0,
+        y: 0
+      },
+      currentNode: null
+    }
+    this.refContainer = React.createRef();
+    this.refStencil = React.createRef();
+  }
+  componentDidMount() {
     const graph = new Graph({
-      container: refContainer.current,
-      grid: true,
+      container: this.refContainer.current,
+      grid: false,
       snapline: {
         enabled: true,
-        sharp: true,
+        sharp: false,
       },
       selecting: {
         enabled: true,
@@ -49,18 +61,18 @@ function App() {
       },
       onPortRendered(args) {
         // console.log(args)
-        const port = args.port
-        const contentSelectors = args.contentSelectors
-        const container = contentSelectors && contentSelectors.content
+        // const port = args.port
+        // const contentSelectors = args.contentSelectors
+        // const container = contentSelectors && contentSelectors.content
         // console.log(port.connected)
-        if (container) {
-          ReactDOM.render(
-            <Tooltip title="port">
-              <div className={`my-port${port.connected ? ' connected' : ''}`} />,
-            </Tooltip>,
-            container,
-          )
-        }
+        // if (container) {
+        //   ReactDOM.render(
+        //     <Tooltip title="port">
+        //       <div className={`my-port${port.connected ? ' connected' : ''}`} />,
+        //     </Tooltip>,
+        //     container,
+        //   )
+        // }
       },
       highlighting: {
         nodeAvailable: {
@@ -84,7 +96,9 @@ function App() {
       },
       connecting: {
         anchor: 'center',
-        connectionPoint: 'anchor',
+        // connectionPoint: 'anchor',
+        allowMulti: false,
+        allowLoop: false,
         allowBlank: false,
         highlight: true,
         snap: true,
@@ -105,22 +119,30 @@ function App() {
               name: 'manhattan',
             },
             zIndex: 0,
+            connector: 'rounded',
           })
         },
-        validateMagnet({ magnet }) {
+        validateMagnet({
+          magnet
+        }) {
           return magnet.getAttribute('port-group') !== 'in'
         },
-        validateConnection({ sourceView, targetView, sourceMagnet, targetMagnet }) {
+        validateConnection({
+          sourceView,
+          targetView,
+          sourceMagnet,
+          targetMagnet
+        }) {
           // // 只能从输出链接桩创建连接
           // if (!sourceMagnet || sourceMagnet.getAttribute('port-group') === 'in') {
           //   return false
           // }
-    
+
           // // 只能连接到输入链接桩
           // if (!targetMagnet || targetMagnet.getAttribute('port-group') !== 'in') {
           //   return false
           // }
-    
+
           // // 判断目标链接桩是否可连接
           // const portId = targetMagnet.getAttribute('port')
           // const node = targetView.cell
@@ -129,16 +151,11 @@ function App() {
           // if (port && port.connected) {
           //   return false
           // }
-    
           // return true
-          
           if (sourceView === targetView) {
             return false
           }
-          if (!sourceMagnet) {
-            return false
-          }
-          if (!targetMagnet) {
+          if (!sourceMagnet || !targetMagnet) {
             return false
           }
           return true
@@ -146,17 +163,17 @@ function App() {
       },
     })
 
-     // 连线事件
-     graph.on('edge:connected', (args) => {
+    // 连线事件
+    graph.on('edge:connected', (args) => {
       console.log('连线事件')
       const edge = args.edge
-      const node = args.currentCell 
+      const node = args.currentCell
       const elem = args.currentMagnet
       const portId = elem.getAttribute('port')
-    
+
       // 触发 port 重新渲染
-      node.setPortProp(portId, 'connected',true)
-    
+      node.setPortProp(portId, 'connected', true)
+
       // 更新连线样式
       edge.attr({
         line: {
@@ -165,22 +182,6 @@ function App() {
         },
       })
     })
-
-    // 节点点击事件
-    graph.on('node:click', ({ e, x, y, node, view }) => { 
-      let markup = node.getMarkup()
-      const data = node.getData()
-      console.log(markup)
-      // markup[1].textContent = 2
-      markup = markup.map(m =>{
-        return m.selector == 'text'?{
-          ...m,
-          textContent: data.text
-        }:m
-      })
-      node.setMarkup(markup)
-    })
-
 
     function showPorts(ports, show) {
       for (let i = 0, len = ports.length; i < len; i = i + 1) {
@@ -191,7 +192,7 @@ function App() {
     graph.on(
       'node:mouseenter',
       FunctionExt.debounce((args) => {
-        const ports = refContainer.current.querySelectorAll(
+        const ports = this.refContainer.current.querySelectorAll(
           '.x6-port-body',
         )
         showPorts(ports, true)
@@ -201,28 +202,89 @@ function App() {
 
     // 节点鼠标移出事件
     graph.on('node:mouseleave', () => {
-      const ports = refContainer.current.querySelectorAll(
+      const ports = this.refContainer.current.querySelectorAll(
         '.x6-port-body',
       )
       showPorts(ports, false)
     })
 
     // 节点删除事件
-    graph.on('node:delete', ({ view, e }) => {
+    graph.on('node:delete', ({
+      node,
+      view,
+      e
+    }) => {
+      console.log(view)
       e.stopPropagation()
-      view.cell.remove()
+      node.remove()
+    })
+
+    // 节点设置事件
+    graph.on('node:contextmenu', (args) => {
+      let {
+        node,
+        view,
+        e
+      } = args
+      if(e.type!=='contextmenu') return
+      e.stopPropagation()
+      let props = node.prop()
+      let position = props.position
+      let metaData = props.data.metaData
+      let dx = props.size.width
+      let dy = props.size.height
+      // console.log(position, dx, dy, metaData.group, name, e.currentTarget)
+      this.setState({
+        boxPosition: {
+          x: metaData.group === GROUP_USER ? position.x + 0.5 * (dx - 24) : position.x + 0.5 * dx,
+          y: position.y + dy - 15
+        },
+        boxShow: true,
+        currentNode:node
+      })
+    })
+
+    graph.on('node:moving', ({
+      view,
+      e
+    }) => {
+      e.stopPropagation()
+      if(this.state.boxShow){
+        // 优化
+        this.hideBox()
+      }
+    })
+
+    // 画布空白区域点击事件
+    graph.on('blank:mousedown', ({
+      view,
+      e
+    }) => {
+      // 空白处点击
+      console.log('空白处点击')
+      e.stopPropagation()
+      this.hideBox()
     })
 
     // 边的鼠标移入事件
     graph.on(
       'edge:mouseenter',
       (e) => {
-        e.cell.addTools({
+        e.cell.addTools([{
           name: 'button-remove',
-          // args: {
-          //   distance: -60
-          // },
-        })
+          args: {
+            distance: '45%'
+          },
+        }, {
+          name: 'target-arrowhead',
+          args: {
+            attrs: {
+              d: 'M -10 -8 10 0 -10 8 Z',
+              fill: '#4173FF',
+              cursor: 'pointer'
+            },
+          },
+        }])
       },
     )
 
@@ -232,255 +294,208 @@ function App() {
         e.cell.removeTools()
       },
     )
-
-    // 绘图
-    const userNode1 = graph.addNode({
-      x: 100,
-      y: 100,
-      shape: 'user-node-svg',
-      data: {
-        text:4
-      },
-    })
-    const userNode2 = graph.addNode({
-      x: 300,
-      y: 100,
-      shape: 'customer-event-node-svg',
-      data: {
-        text:45
-      },
-    })
-    // const userNode3 = graph.addNode({
-    //   x: 100,
-    //   y: 100,
-    //   shape: 'six-angle-node-svg',
-    //   data: {
-    //     text:45
-    //   },
-    // })
-    const userNode4 = graph.addNode({
-      x: 100,
-      y: 300,
-      shape: 'pentagon-node-svg',
-      data: {
-        text:45
-      },
-    })
-
-    // const userNode1 = UserNodeSvg().setData({
-    //   text:2
-    // })
-    // graph.addNode(userNode1)
-
     // 拖拽相关
     const dnd = new Dnd({
       target: graph,
       scaled: false,
       animation: true,
       validateNode(droppingNode, options) {
-        return droppingNode.shape === 'html'
-          ? new Promise((resolve) => {
-              const { draggingNode, draggingGraph } = options
-              const view = draggingGraph.findView(draggingNode)
-              const contentElem = view.findOne('foreignObject > body > div')
-              Dom.addClass(contentElem, 'validating')
-              setTimeout(() => {
-                Dom.removeClass(contentElem, 'validating')
-                resolve(true)
-              }, 3000)
-            })
-          : true
+        // console.log(droppingNode.scale)
+        return droppingNode.shape === 'html' ?
+          new Promise((resolve) => {
+            const {
+              draggingNode,
+              draggingGraph
+            } = options
+            const view = draggingGraph.findView(draggingNode)
+            const contentElem = view.findOne('foreignObject > body > div')
+            Dom.addClass(contentElem, 'validating')
+            setTimeout(() => {
+              Dom.removeClass(contentElem, 'validating')
+              resolve(true)
+            }, 3000)
+          }) :
+          true
       }
     })
 
-    setGraph(graph)
-    setDnd(dnd)
-    
-  },[])
-  const startDrag = (e) => {
-    const target = e.currentTarget
-    const type = target.getAttribute('data-type')
-    const node = graph.createNode({
-      shape: 'user-node-svg',
-      data: {
-        text:3
-      },
+    this.setState({
+      graph,dnd
     })
+  }
+  hideBox = ()=>{
+    // 隐藏设置盒子
+    console.log('111')
+    this.setState({
+      boxPosition:{
+        x: 0,
+        y: 0
+      },
+      boxShow: false
+    })
+  }
 
+  deleteNode = (e) => {
+    const {currentNode} = this.state
+    // 删除节点
+    currentNode.remove()
+    this.setState({
+      boxShow: false,
+      currentNode: null
+    })
+  }
+
+  startDragNode = (e) => {
+    const {graph,dnd} = this.state
+    // 节点拖拽开始
+    const metaData = e.currentTarget.dataset || {};
+    let node = null;
+    switch (metaData.group) {
+      case GROUP_USER:
+        node = createUserNode(graph,metaData);
+        break;
+      case GROUP_EVENT:
+        node = createEventNode(graph,metaData);
+        break;
+      case GROUP_ACTION:
+        node = createActionNode(graph,metaData);
+        break;
+      case GROUP_LOGIC:
+        node = createLogicNode(graph,metaData);
+        break;
+      default:
+        return;
+    }
     dnd.start(node, e.nativeEvent)
   }
-  const startDrag1 = (e) => {
-    const target = e.currentTarget
-    const dataset = e.currentTarget.dataset || {};
-    const { title, d, bodyFill } = dataset;
-    const node = graph.createNode({
-      shape: 'customer-event-node-svg',
+
+  // 设置输出
+  setOutput = (e) => {
+    // 设置输出
+    const {graph,currentNode} = this.state
+    let position = currentNode.getProp('position')
+    const edge = new Shape.Edge({
       attrs: {
-        body: {
-          fill: bodyFill,
-          filter: {
-            name: 'dropShadow',
-            args: {
-              color: bodyFill,
-              dx: 0,
-              dy: 10,
-              blur: 8,
-              opacity: 0.4
-            }
-          }
+        line: {
+          stroke: '#808080',
+          strokeWidth: 1,
+          targetMarker: {
+            name: 'classic',
+            size: 8,
+          },
         },
-        iconPath: {
-          d: d,
-        },
-        text: {
-          text: title || '',
-          fill: 'white',
-        }
       },
-      data: {
-        text: title,
+      router: {
+        name: 'manhattan',
       },
+      zIndex: 0,
+      connector: 'rounded',
+      source: {
+        cell: currentNode.id,
+        port: currentNode.getPorts()[1].id
+      },
+      target: { x: position.x+200, y: position.y+60 }
     })
-
-    dnd.start(node, e.nativeEvent)
+    graph.addEdge(edge)
+    this.hideBox()
   }
-  const startDrag2 = (e) => {
-    const target = e.currentTarget
-    const dataset = e.currentTarget.dataset || {};
-    const { title, d, bodyFill } = dataset;
-    const node = graph.createNode({
-      shape: 'six-angle-node-svg',
-      attrs: {
-        body: {
-          fill: bodyFill,
-          filter: {
-            name: 'dropShadow',
-            args: {
-              color: bodyFill,
-              dx: 0,
-              dy: 10,
-              blur: 8,
-              opacity: 0.4
-            }
-          }
-        },
-        iconPath: {
-          d: d,
-        },
-        text: {
-          text: title || '',
-          fill: 'white',
+
+  render(){
+    const { boxPosition,boxShow,}= this.state
+    return (
+      <div id='container' className="app">
+        <div className="app-content" ref={this.refContainer}></div>
+        {
+            boxShow
+            ?<div className="node-operator-box" style={{left:boxPosition.x,top:boxPosition.y}}>
+              <div className="node-operator-box-item">设置</div>
+              <div className="node-operator-box-item" onClick={this.setOutput}>输出</div>
+              <div className="node-operator-box-item item-red" onClick={this.deleteNode}>删除</div>
+            </div>
+            :''
         }
-      },
-      data: {
-        text:3
-      },
-    })
-
-    dnd.start(node, e.nativeEvent)
-  }
-  const startDrag3 = (e) => {
-    const target = e.currentTarget
-    const dataset = e.currentTarget.dataset || {};
-    const { title, d, bodyFill } = dataset;
-    const node = graph.createNode({
-      shape: 'pentagon-node-svg',
-      attrs: {
-        bodyg1: {
-          fill: bodyFill,
-          filter: {
-            name: 'dropShadow',
-            args: {
-              color: bodyFill,
-              dx: 0,
-              dy: 10,
-              blur: 8,
-              opacity: 0.4
-            }
-          }
-        },
-        iconPath: {
-          d: d,
-        },
-        text: {
-          text: title || '',
-          fill: 'white',
-        }
-      },
-      data: {
-        text:3
-      },
-    })
-
-    dnd.start(node, e.nativeEvent)
-  }
-  return (
-    <div id='container' className="app">
-      <div className="app-content" ref={refContainer} />
-      {/* <div className="app-stencil" ref={refStencil} /> */}
-      <div className="dnd-pannel">
-        <div className="dnd-group">
-          <div className="dnd-group-title">对象</div>
-          <div className="dnd-group-box">
-            <MenuIcon
-              type={3}
-              onMouseDown={startDrag3}
-              title="客户"
-              color="#4173FF"
-              svgD="M20.1565588,17 C22.777861,17 25.0957379,18.701659 25.8810033,21.2025756 L25.8810033,21.2025756 L26.4453785,23 C26.5859147,23.4475803 26.6574142,23.9139655 26.6574142,24.3830908 C26.6574142,26.9329394 24.5903536,29 22.0405051,29 L22.0405051,29 L9.61814458,29 C9.14901928,29 8.68263402,28.9285005 8.23505373,28.7879643 C5.80230931,28.0241043 4.44941118,25.4327444 5.21327116,23 L5.21327116,23 L5.77764634,21.2025756 C6.56291178,18.701659 8.88078862,17 11.5020909,17 L11.5020909,17 Z M15.8293248,3 C19.4191757,3 22.3293248,5.91014913 22.3293248,9.5 C22.3293248,13.0898509 19.4191757,16 15.8293248,16 C12.239474,16 9.32932483,13.0898509 9.32932483,9.5 C9.32932483,5.91014913 12.239474,3 15.8293248,3 Z"
-            />
-            <MenuIcon
-              type={3}
-              onMouseDown={startDrag3}
-              title="客户群"
-              svgD="M14.1549495,4 C17.3855727,4 20.0049969,7.0433145 20.0049969,10.8097928 C20.0049969,12.7532957 18.9562093,14.7544846 17.8075911,16.0979284 C17.3273633,16.6252354 17.0359629,17.2555121 16.9635544,17.4538606 C16.8911459,17.6522092 16.8471355,18.1770245 16.9635544,18.3728814 C18.8553608,21.6572505 25.1128742,22.8474576 25.636759,25.212806 C25.654769,25.4104482 25.6660922,25.6627795 25.6707287,25.9697999 C25.6708807,25.9798659 25.6709567,25.9899329 25.6709567,26 C25.6709567,27.1045747 24.775522,28.0000094 23.6709474,28 L23.6709474,28 L4.00179483,28 C3.99373844,28 3.98568212,27.9999513 3.97762631,27.999854 C2.8731466,27.9865061 1.98860951,27.0803277 2.00194087,25.9758478 C2.00565754,25.6683097 2.01471215,25.4139625 2.02910471,25.212806 C2.50933249,22.8323917 9.45453823,21.6421846 11.3317923,18.3578154 C11.4443485,18.1130578 11.3830065,17.5923574 11.3317923,17.4387947 C11.033309,16.7664029 10.1530514,15.7664783 10.1239466,15.7363465 C9.00341516,14.5009416 8.29034968,12.7382298 8.29034968,10.7947269 C8.29034968,7.02824859 10.9243263,4 14.1549495,4 Z M22.037585,6 L22.2211903,6.00555663 C24.2898912,6.13104189 25.9332355,8.366058 25.9332355,11.0977444 C25.9332355,12.556391 25.4688533,13.8646617 24.720682,14.7969925 L24.720682,14.7969925 L24.669084,14.8571429 C24.6045865,14.9323308 24.5529885,15.0075188 24.4884909,15.0676692 C24.1660033,15.4736842 23.9596112,15.9849624 23.9209127,16.0902256 C23.8951137,16.1503759 23.8435157,16.6315789 23.9209127,16.7819549 C25.1721647,19.2330827 29.3387048,20.1353383 29.6611925,21.9097744 C29.6837014,22.1721728 29.6744053,22.5590549 29.6333041,23.070421 C29.59188,23.5858034 29.1643952,23.9846197 28.647381,23.9902246 L28.647381,23.9902246 L28.4199293,23.9929439 C28.2654722,23.9949266 28.1053704,23.9972786 27.9396239,24 C27.228991,22.3751096 24.8770124,20.5397223 20.883688,18.4938383 C20.7446302,18.4225954 20.6143998,18.3353026 20.4956611,18.2337459 C19.6562455,17.515797 19.5577772,16.2533036 20.2757261,15.4138879 L20.2757261,15.4138879 L20.4637869,15.1964273 L20.4637869,15.1964273 L20.6444384,14.9924812 C20.734735,14.9172932 20.812132,14.8120301 20.889529,14.7218045 C20.915328,14.6917293 20.9411271,14.6766917 20.9669261,14.6466165 C21.960188,13.4135338 22.5922637,11.6541353 22.5922637,9.71428571 C22.5922637,8.64308378 22.3472187,7.49378916 21.857095,6.26641529 C21.8479412,6.24349035 21.8432385,6.21903141 21.8432385,6.19434648 C21.8432385,6.08701188 21.9302504,6 22.037585,6 L22.037585,6 Z"
-            />
-            <MenuIcon
-              type={3}
-              onMouseDown={startDrag2}
-              title="六边形"
-              svgD="M14.1549495,4 C17.3855727,4 20.0049969,7.0433145 20.0049969,10.8097928 C20.0049969,12.7532957 18.9562093,14.7544846 17.8075911,16.0979284 C17.3273633,16.6252354 17.0359629,17.2555121 16.9635544,17.4538606 C16.8911459,17.6522092 16.8471355,18.1770245 16.9635544,18.3728814 C18.8553608,21.6572505 25.1128742,22.8474576 25.636759,25.212806 C25.654769,25.4104482 25.6660922,25.6627795 25.6707287,25.9697999 C25.6708807,25.9798659 25.6709567,25.9899329 25.6709567,26 C25.6709567,27.1045747 24.775522,28.0000094 23.6709474,28 L23.6709474,28 L4.00179483,28 C3.99373844,28 3.98568212,27.9999513 3.97762631,27.999854 C2.8731466,27.9865061 1.98860951,27.0803277 2.00194087,25.9758478 C2.00565754,25.6683097 2.01471215,25.4139625 2.02910471,25.212806 C2.50933249,22.8323917 9.45453823,21.6421846 11.3317923,18.3578154 C11.4443485,18.1130578 11.3830065,17.5923574 11.3317923,17.4387947 C11.033309,16.7664029 10.1530514,15.7664783 10.1239466,15.7363465 C9.00341516,14.5009416 8.29034968,12.7382298 8.29034968,10.7947269 C8.29034968,7.02824859 10.9243263,4 14.1549495,4 Z M22.037585,6 L22.2211903,6.00555663 C24.2898912,6.13104189 25.9332355,8.366058 25.9332355,11.0977444 C25.9332355,12.556391 25.4688533,13.8646617 24.720682,14.7969925 L24.720682,14.7969925 L24.669084,14.8571429 C24.6045865,14.9323308 24.5529885,15.0075188 24.4884909,15.0676692 C24.1660033,15.4736842 23.9596112,15.9849624 23.9209127,16.0902256 C23.8951137,16.1503759 23.8435157,16.6315789 23.9209127,16.7819549 C25.1721647,19.2330827 29.3387048,20.1353383 29.6611925,21.9097744 C29.6837014,22.1721728 29.6744053,22.5590549 29.6333041,23.070421 C29.59188,23.5858034 29.1643952,23.9846197 28.647381,23.9902246 L28.647381,23.9902246 L28.4199293,23.9929439 C28.2654722,23.9949266 28.1053704,23.9972786 27.9396239,24 C27.228991,22.3751096 24.8770124,20.5397223 20.883688,18.4938383 C20.7446302,18.4225954 20.6143998,18.3353026 20.4956611,18.2337459 C19.6562455,17.515797 19.5577772,16.2533036 20.2757261,15.4138879 L20.2757261,15.4138879 L20.4637869,15.1964273 L20.4637869,15.1964273 L20.6444384,14.9924812 C20.734735,14.9172932 20.812132,14.8120301 20.889529,14.7218045 C20.915328,14.6917293 20.9411271,14.6766917 20.9669261,14.6466165 C21.960188,13.4135338 22.5922637,11.6541353 22.5922637,9.71428571 C22.5922637,8.64308378 22.3472187,7.49378916 21.857095,6.26641529 C21.8479412,6.24349035 21.8432385,6.21903141 21.8432385,6.19434648 C21.8432385,6.08701188 21.9302504,6 22.037585,6 L22.037585,6 Z"
-            />
-            <MenuIcon
-              type={3}
-              onMouseDown={startDrag2}
-              title="六边形"
-              svgD="M14.1549495,4 C17.3855727,4 20.0049969,7.0433145 20.0049969,10.8097928 C20.0049969,12.7532957 18.9562093,14.7544846 17.8075911,16.0979284 C17.3273633,16.6252354 17.0359629,17.2555121 16.9635544,17.4538606 C16.8911459,17.6522092 16.8471355,18.1770245 16.9635544,18.3728814 C18.8553608,21.6572505 25.1128742,22.8474576 25.636759,25.212806 C25.654769,25.4104482 25.6660922,25.6627795 25.6707287,25.9697999 C25.6708807,25.9798659 25.6709567,25.9899329 25.6709567,26 C25.6709567,27.1045747 24.775522,28.0000094 23.6709474,28 L23.6709474,28 L4.00179483,28 C3.99373844,28 3.98568212,27.9999513 3.97762631,27.999854 C2.8731466,27.9865061 1.98860951,27.0803277 2.00194087,25.9758478 C2.00565754,25.6683097 2.01471215,25.4139625 2.02910471,25.212806 C2.50933249,22.8323917 9.45453823,21.6421846 11.3317923,18.3578154 C11.4443485,18.1130578 11.3830065,17.5923574 11.3317923,17.4387947 C11.033309,16.7664029 10.1530514,15.7664783 10.1239466,15.7363465 C9.00341516,14.5009416 8.29034968,12.7382298 8.29034968,10.7947269 C8.29034968,7.02824859 10.9243263,4 14.1549495,4 Z M22.037585,6 L22.2211903,6.00555663 C24.2898912,6.13104189 25.9332355,8.366058 25.9332355,11.0977444 C25.9332355,12.556391 25.4688533,13.8646617 24.720682,14.7969925 L24.720682,14.7969925 L24.669084,14.8571429 C24.6045865,14.9323308 24.5529885,15.0075188 24.4884909,15.0676692 C24.1660033,15.4736842 23.9596112,15.9849624 23.9209127,16.0902256 C23.8951137,16.1503759 23.8435157,16.6315789 23.9209127,16.7819549 C25.1721647,19.2330827 29.3387048,20.1353383 29.6611925,21.9097744 C29.6837014,22.1721728 29.6744053,22.5590549 29.6333041,23.070421 C29.59188,23.5858034 29.1643952,23.9846197 28.647381,23.9902246 L28.647381,23.9902246 L28.4199293,23.9929439 C28.2654722,23.9949266 28.1053704,23.9972786 27.9396239,24 C27.228991,22.3751096 24.8770124,20.5397223 20.883688,18.4938383 C20.7446302,18.4225954 20.6143998,18.3353026 20.4956611,18.2337459 C19.6562455,17.515797 19.5577772,16.2533036 20.2757261,15.4138879 L20.2757261,15.4138879 L20.4637869,15.1964273 L20.4637869,15.1964273 L20.6444384,14.9924812 C20.734735,14.9172932 20.812132,14.8120301 20.889529,14.7218045 C20.915328,14.6917293 20.9411271,14.6766917 20.9669261,14.6466165 C21.960188,13.4135338 22.5922637,11.6541353 22.5922637,9.71428571 C22.5922637,8.64308378 22.3472187,7.49378916 21.857095,6.26641529 C21.8479412,6.24349035 21.8432385,6.21903141 21.8432385,6.19434648 C21.8432385,6.08701188 21.9302504,6 22.037585,6 L22.037585,6 Z"
-            />
+        {/* <div className="app-stencil" ref={this.refStencil} /> */}
+        <div className="dnd-pannel">
+          <div className="dnd-group">
+            <div className="dnd-group-title">对象</div>
+            <div className="dnd-group-box">
+              <DragNode 
+                group={GROUP_USER}
+                onMouseDown={this.startDragNode}
+                title="客户"
+                color="#4173FF"
+                iconUrl='./assets/shapeIcon/user.png'
+              />
+              <DragNode 
+                group={GROUP_USER}
+                onMouseDown={this.startDragNode}
+                title="客户"
+                color="#5BC9A4"
+                iconUrl='./assets/shapeIcon/user.png'
+              />
+            </div>
           </div>
-          <div className="dnd-group-title">事件</div>
-          <div className="dnd-group-box">
-            <MenuIcon
-              type={2}
-              onMouseDown={startDrag1}
-              title="企微客户事件"
-              svgD="M21.1853625,23.3545238 C22.1881326,24.1628405 23.3583785,24.5494129 24.6289064,24.7145886 C25.4116449,24.7728906 25.8862309,25.4258651 25.9960382,26.1347507 C26.0837173,26.9689618 25.5476012,27.7457367 24.7224329,27.9554651 C23.9303527,28.1441444 23.039425,27.7282145 22.7808253,26.9471106 C22.4355063,25.8318035 21.8661963,24.8747873 20.9919476,24.0983905 L20.7669857,23.9080672 C20.6210336,23.7904176 20.5980899,23.5767263 20.7157395,23.4307743 C20.7641792,23.3706816 20.8316529,23.3288924 20.907033,23.3122983 C21.0280238,23.2856665 21.1208001,23.2997407 21.1853625,23.3545238 Z M23.2531238,7.86483355 C24.2919515,8.87899661 25.0707388,10.3351706 25.5894857,12.2333554 L25.6898035,12.618877 C25.8224147,13.1550255 25.4952831,13.6971623 24.9591347,13.8297734 C24.8662508,13.8527474 24.7705506,13.8622722 24.6749606,13.8580565 L24.6322441,13.8566211 L24.6322441,13.8566211 L24.5195408,13.8561426 C22.8428761,13.9240328 21.5656181,15.1381567 21.2910694,16.7075305 C21.2670155,16.8450272 21.2514571,16.9819706 21.244394,17.1183609 L21.2401424,17.3225318 C21.2443936,17.7256871 21.0061185,18.0919596 20.6358341,18.2514643 C20.1975383,18.4402657 19.6370739,18.581893 18.954441,18.676346 L18.9366041,18.676346 C17.438308,18.9648793 16.3502597,20.2547928 16.3502597,21.6974593 C16.3502597,22.0174844 16.4498031,22.3779046 16.64889,22.7787202 L16.7567519,22.9824812 C17.026847,23.4642314 16.8552666,24.0737225 16.3735164,24.3438176 C16.2739224,24.3996554 16.1655015,24.4380248 16.0529549,24.4572622 C15.444503,24.5612636 14.8479671,24.6257371 14.2633472,24.6506825 C12.8185617,24.7185727 11.4094499,24.5827923 10.0003381,24.2603139 C9.78629582,24.2263688 9.51874294,24.2603139 9.30470064,24.3282041 C8.23448915,24.820408 7.14644079,25.3465569 6.07622929,25.8387608 C5.66598155,26.0424314 5.29140753,26.0763765 4.93467036,25.8048157 C4.59577006,25.5672001 4.56009634,25.2107766 4.59577006,24.7864629 C4.73846492,23.9378355 4.84548607,23.0892082 4.93467036,22.2405808 C4.93467036,22.0708554 4.82764921,21.8162672 4.68495435,21.6804868 C3.27584254,20.3396556 2.06293618,18.863044 1.456483,16.9960638 C0.314924068,13.2960486 1.34946185,10.1221823 4.16768546,7.47446497 C9.3225375,2.67123417 18.3301509,2.89187728 23.2531238,7.86483355 Z M28.8782458,20.0178862 C29.7645766,20.0272469 30.4836238,20.6351237 30.5724348,21.4801039 C30.6576934,22.2912849 30.2190753,23.003751 29.3944147,23.2442029 C28.2598403,23.568487 27.2798322,24.1840788 26.5401814,25.064875 C26.3828089,25.2522784 26.0964451,25.2823765 25.9013805,25.0586225 C25.7938161,24.9325752 25.85133,24.7442915 25.9457535,24.6318494 C26.697589,23.6985136 27.1060114,22.6987543 27.1936138,21.5105927 C27.2799375,20.6472051 28.0269419,20.0048441 28.8782458,20.0178862 Z M22.5579982,18.222709 C22.6732986,18.3101608 22.7202776,18.4612212 22.6749107,18.5986397 C22.6610571,18.6405926 22.6399005,18.6782878 22.611438,18.7117243 C21.8185079,19.682719 21.4512283,20.7865068 21.3307124,22.0241366 C21.2459479,22.9207 20.485078,23.5155102 19.620515,23.4643547 C18.7559519,23.4131993 18.0410903,22.7427046 17.9543501,21.9174263 C17.8768375,21.1799435 18.3536899,20.4374539 19.0824995,20.2188282 C20.1819855,19.9079836 21.1196701,19.3456296 21.8804952,18.5196744 L22.0835967,18.2878693 C22.1966055,18.1388734 22.4090023,18.1097002 22.5579982,18.222709 Z M25.8438542,16.6124119 C26.1511664,17.6809198 26.7100017,18.5913733 27.5324725,19.3290937 L27.7633282,19.5259966 C27.9165044,19.6477154 27.9420056,19.8705619 27.8202868,20.0237381 C27.7633244,20.0954219 27.6808197,20.142267 27.5900736,20.1544499 C27.4468434,20.1736019 27.3537962,20.1598348 27.3109217,20.1130727 C26.3401276,19.3100954 25.2041538,18.959581 23.9671513,18.8285341 C23.142483,18.7411694 22.5156953,18.00646 22.5376751,17.2035623 C22.5699521,16.3299661 23.1868456,15.6211772 24.0599399,15.4946031 C24.8314472,15.4135144 25.6028201,15.8371581 25.8438542,16.6124119 Z"
-            />
-            <MenuIcon
-              type={2}
-              onMouseDown={startDrag1}
-              title="客户群事件"
-              svgD="M14.1549495,4 C17.3855727,4 20.0049969,7.0433145 20.0049969,10.8097928 C20.0049969,12.7532957 18.9562093,14.7544846 17.8075911,16.0979284 C17.3273633,16.6252354 17.0359629,17.2555121 16.9635544,17.4538606 C16.8911459,17.6522092 16.8471355,18.1770245 16.9635544,18.3728814 C18.8553608,21.6572505 25.1128742,22.8474576 25.636759,25.212806 C25.654769,25.4104482 25.6660922,25.6627795 25.6707287,25.9697999 C25.6708807,25.9798659 25.6709567,25.9899329 25.6709567,26 C25.6709567,27.1045747 24.775522,28.0000094 23.6709474,28 L23.6709474,28 L4.00179483,28 C3.99373844,28 3.98568212,27.9999513 3.97762631,27.999854 C2.8731466,27.9865061 1.98860951,27.0803277 2.00194087,25.9758478 C2.00565754,25.6683097 2.01471215,25.4139625 2.02910471,25.212806 C2.50933249,22.8323917 9.45453823,21.6421846 11.3317923,18.3578154 C11.4443485,18.1130578 11.3830065,17.5923574 11.3317923,17.4387947 C11.033309,16.7664029 10.1530514,15.7664783 10.1239466,15.7363465 C9.00341516,14.5009416 8.29034968,12.7382298 8.29034968,10.7947269 C8.29034968,7.02824859 10.9243263,4 14.1549495,4 Z M22.037585,6 L22.2211903,6.00555663 C24.2898912,6.13104189 25.9332355,8.366058 25.9332355,11.0977444 C25.9332355,12.556391 25.4688533,13.8646617 24.720682,14.7969925 L24.720682,14.7969925 L24.669084,14.8571429 C24.6045865,14.9323308 24.5529885,15.0075188 24.4884909,15.0676692 C24.1660033,15.4736842 23.9596112,15.9849624 23.9209127,16.0902256 C23.8951137,16.1503759 23.8435157,16.6315789 23.9209127,16.7819549 C25.1721647,19.2330827 29.3387048,20.1353383 29.6611925,21.9097744 C29.6837014,22.1721728 29.6744053,22.5590549 29.6333041,23.070421 C29.59188,23.5858034 29.1643952,23.9846197 28.647381,23.9902246 L28.647381,23.9902246 L28.4199293,23.9929439 C28.2654722,23.9949266 28.1053704,23.9972786 27.9396239,24 C27.228991,22.3751096 24.8770124,20.5397223 20.883688,18.4938383 C20.7446302,18.4225954 20.6143998,18.3353026 20.4956611,18.2337459 C19.6562455,17.515797 19.5577772,16.2533036 20.2757261,15.4138879 L20.2757261,15.4138879 L20.4637869,15.1964273 L20.4637869,15.1964273 L20.6444384,14.9924812 C20.734735,14.9172932 20.812132,14.8120301 20.889529,14.7218045 C20.915328,14.6917293 20.9411271,14.6766917 20.9669261,14.6466165 C21.960188,13.4135338 22.5922637,11.6541353 22.5922637,9.71428571 C22.5922637,8.64308378 22.3472187,7.49378916 21.857095,6.26641529 C21.8479412,6.24349035 21.8432385,6.21903141 21.8432385,6.19434648 C21.8432385,6.08701188 21.9302504,6 22.037585,6 L22.037585,6 Z"
-            />
-            <MenuIcon
-              type={2}
-              onMouseDown={startDrag1}
-              title="客户访问页面"
-              color="#4173FF"
-              svgD="M25.0900786,22.9139596 C24.9669152,24.1697225 24.036347,25.1977922 22.8047128,25.4392851 C22.6199677,25.4737841 22.442065,25.4944834 22.2504774,25.4944834 C21.2035883,25.4875836 20.2456505,24.9080008 19.7461545,23.9765283 L17.9836838,20.6297242 L12.5644931,26.0391644 C11.4491799,27.1500316 9.64962543,27.1500316 8.53431224,26.0391644 L5.95612937,23.5487613 C5.42242122,23.017477 5.12135504,22.2929984 5.12135504,21.5340208 C5.12135504,20.7750432 5.42242117,20.0505646 5.95612937,19.5192804 L11.37532,14.1098402 L8.18247745,12.3710712 C7.07400662,11.7914883 6.47871676,10.5426252 6.71820119,9.30756167 C6.96452801,8.07249814 7.97720506,7.14792547 9.22252411,7.02372915 L23.3863178,5.60927094 C23.4821116,5.60237115 23.5779054,5.60237115 23.6736992,5.60927094 L23.6805416,5.61617073 C24.433207,5.61617073 25.1585027,5.91976174 25.6922108,6.45104608 C26.308028,7.05132836 26.6090941,7.89310345 26.5201428,8.74867817 L25.0900786,22.9139596 Z"
-            />
-            <MenuIcon
-              type={2}
-              onMouseDown={startDrag1}
-              title="定时处理"
-              color="#FBC02E"
-              svgD="M16,4 C22.627417,4 28,9.372583 28,16 C28,22.627417 22.627417,28 16,28 C9.372583,28 4,22.627417 4,16 C4,9.372583 9.372583,4 16,4 Z M14.2496608,11 L14,11 C13.4477153,11 13,11.4477153 13,12 L13,12 L13,18 C13,18.5522847 13.4477153,19 14,19 L14,19 L14.2496608,19 C14.3384209,19 14.42448,18.9884359 14.5064137,18.9667322 L14.5064137,18.9667322 L20,18.9650606 C20.5522847,18.9650606 21,18.5173454 21,17.9650606 L21,17.9650606 L21,17.6793463 C21,17.1270616 20.5522847,16.6793463 20,16.6793463 L20,16.6793463 L15.249,16.679 L15.2496608,12 C15.2496608,11.4477153 14.8019456,11 14.2496608,11 L14.2496608,11 Z"
-            />
+          <div className="dnd-group">
+            <div className="dnd-group-title">事件</div>
+            <div className="dnd-group-box">
+              <DragNode 
+                group={GROUP_EVENT}
+                onMouseDown={this.startDragNode}
+                title="企微客户事件"
+                color="#5BC9A4"
+                iconUrl='./assets/shapeIcon/qywechat.png'
+              /> 
+              <DragNode 
+                group={GROUP_EVENT}
+                onMouseDown={this.startDragNode}
+                title="企微客户事件"
+                color="#4173FF"
+                iconUrl='./assets/shapeIcon/qywechat.png'
+              />            
+            </div>
+          </div>
+          <div className="dnd-group">
+            <div className="dnd-group-title">动作</div>
+            <div className="dnd-group-box">
+              <DragNode 
+                group={GROUP_ACTION}
+                onMouseDown={this.startDragNode}
+                title="设置客户信息"
+                color="#5BC9A4"
+                iconUrl='./assets/shapeIcon/qywechat.png'
+              /> 
+              <DragNode 
+                group={GROUP_ACTION}
+                onMouseDown={this.startDragNode}
+                title="客户群事件"
+                color="#4173FF"
+                iconUrl='./assets/shapeIcon/qywechat.png'
+              />            
+            </div>
+          </div>
+          <div className="dnd-group">
+            <div className="dnd-group-title">逻辑</div>
+            <div className="dnd-group-box">
+              <DragNode 
+                group={GROUP_LOGIC}
+                onMouseDown={this.startDragNode}
+                title="合并"
+                color="#5BC9A4"
+                iconUrl='./assets/shapeIcon/qywechat.png'
+              /> 
+              <DragNode 
+                group={GROUP_LOGIC}
+                onMouseDown={this.startDragNode}
+                title="延时"
+                color="#4173FF"
+                iconUrl='./assets/shapeIcon/qywechat.png'
+              />            
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 }
 
 export default App;
