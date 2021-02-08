@@ -2,7 +2,7 @@
  * @Author: duchengdong
  * @Date: 2021-02-01 11:56:34
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-07 20:55:37
+ * @LastEditTime: 2021-02-08 20:07:02
  * @Description: 
  */
 import React,{Component} from 'react';
@@ -17,11 +17,11 @@ import createActionNode from './components/Node/createActionNode'
 import createLogicNode from './components/Node/createLogicNode'
 import DragNode from './components/DragNode'
 import {GROUP_USER,GROUP_EVENT,GROUP_ACTION,GROUP_LOGIC} from 'utils/constants'
+import {createNormalEdge,createYesEdge,createNoEdge} from './components/Edge'
 import './App.css';
 
 const {Dnd,Stencil } = Addon
 const { Rect, Circle } = Shape
-
 class App extends Component {
   constructor(props){
     super(props)
@@ -104,23 +104,7 @@ class App extends Component {
         snap: true,
         createEdge() {
           console.log(1)
-          return new Shape.Edge({
-            attrs: {
-              line: {
-                stroke: '#808080',
-                strokeWidth: 1,
-                targetMarker: {
-                  name: 'classic',
-                  size: 8,
-                },
-              },
-            },
-            router: {
-              name: 'manhattan',
-            },
-            zIndex: 0,
-            connector: 'rounded',
-          })
+          return createNormalEdge()
         },
         validateMagnet({
           magnet
@@ -162,6 +146,11 @@ class App extends Component {
         },
       },
     })
+
+    // 添加背景
+    // graph.drawBackground({
+    //   color: '#f5f5f5',
+    // })
 
     // 连线事件
     graph.on('edge:connected', (args) => {
@@ -301,6 +290,8 @@ class App extends Component {
       animation: true,
       validateNode(droppingNode, options) {
         // console.log(droppingNode.scale)
+        // 清除画布背景
+        // graph.clearBackground()
         return droppingNode.shape === 'html' ?
           new Promise((resolve) => {
             const {
@@ -369,35 +360,135 @@ class App extends Component {
     dnd.start(node, e.nativeEvent)
   }
 
-  // 设置输出
-  setOutput = (e) => {
+  // 设置yes输出
+  setYesOutput = (e) => {
     // 设置输出
+    e.stopPropagation()
     const {graph,currentNode} = this.state
-    let position = currentNode.getProp('position')
-    const edge = new Shape.Edge({
-      attrs: {
-        line: {
-          stroke: '#808080',
-          strokeWidth: 1,
-          targetMarker: {
-            name: 'classic',
-            size: 8,
-          },
-        },
-      },
-      router: {
-        name: 'manhattan',
-      },
-      zIndex: 0,
-      connector: 'rounded',
-      source: {
-        cell: currentNode.id,
-        port: currentNode.getPorts()[1].id
-      },
-      target: { x: position.x+200, y: position.y+60 }
-    })
+    const edge = createYesEdge(currentNode)
     graph.addEdge(edge)
     this.hideBox()
+  }
+
+  // 设置no输出
+  setNoOutput = (e) => {
+    e.stopPropagation()
+    const {graph,currentNode} = this.state
+    const edge = createNoEdge(currentNode)
+    graph.addEdge(edge)
+    this.hideBox()
+  }
+
+  // 启用节点
+  startNode = (e) => {
+    const {graph,currentNode} = this.state
+    let attrs = currentNode.getAttrs()
+    let edges = graph.getConnectedEdges(currentNode)
+    edges.forEach(edge => {
+      let data = edge.getData()
+      if(data.disable){
+        // 如果节点已经被禁用，判断是否启用
+        let neighbors = graph.getNeighbors(edge)
+        console.log(neighbors)
+        // 判断边的相邻节点的状态
+        let canUpdate = true
+        neighbors.forEach(node => {
+          // 如果发现相邻节点存在disable，则不更新
+          if(node.id!=currentNode.id&&node.getData().disable){
+            canUpdate=false
+          }
+        })
+        if(canUpdate){
+          let attrs = edge.getAttrs()
+          edge.updateAttrs({
+            line: {
+              ...attrs.line,
+              stroke: data.configData[data.type].color
+            }
+          },{
+            silent: true
+          })
+          edge.setLabels({
+              attrs: {
+                  text: {
+                      fill: data.configData[data.type].color,
+                      text: data.configData[data.type].text,
+                  },
+              },
+          })
+          data.disable = false
+          edge.setData(data,{
+            silent: true
+          })
+        }
+      }
+    })
+    console.log('startNode:attrs:',attrs)
+    let nodeData = currentNode.getData()
+    nodeData.disable = false
+    currentNode.setData(nodeData,{
+      silent: true
+    })
+    currentNode.updateAttrs({
+      disabled: {
+        ...attrs.disabled,
+        class: 'node-disable hide'
+      }
+    })
+    this.hideBox()
+  }
+
+  // 禁用节点
+  stopNode = (e) => {
+    const {graph,currentNode} = this.state
+    let attrs = currentNode.getAttrs()
+    let edges = graph.getConnectedEdges(currentNode)
+    console.log('stopNode:attrs:',attrs,edges)
+    edges.forEach(edge => {
+      let data = edge.getData()
+      console.log(data)
+      if(!data.disable){
+        let attrs = edge.getAttrs()
+        edge.updateAttrs({
+          line: {
+            ...attrs.line,
+            stroke: data.configData.DISABLE_COLOR
+          }
+        },{
+          silent: true
+        })
+        edge.setLabels({
+            attrs: {
+                text: {
+                    fill: data.configData.DISABLE_COLOR,
+                    text: data.configData.DISABLE_TEXT,
+                },
+            },
+        })
+        data.disable = true
+        edge.setData(data,{
+          silent: true
+        })
+      }
+    });
+    // 设置节点
+    let nodeData = currentNode.getData()
+    nodeData.disable = true
+    currentNode.setData(nodeData,{
+      silent: true
+    })
+    currentNode.updateAttrs({
+      disabled: {
+        ...attrs.disabled,
+        class: 'node-disable'
+      }
+    })
+    this.hideBox()
+  }
+
+  outputJson = ()=> {
+    const {graph} = this.state
+    console.log(graph.toJSON())
   }
 
   render(){
@@ -408,9 +499,12 @@ class App extends Component {
         {
             boxShow
             ?<div className="node-operator-box" style={{left:boxPosition.x,top:boxPosition.y}}>
-              <div className="node-operator-box-item">设置</div>
-              <div className="node-operator-box-item" onClick={this.setOutput}>输出</div>
+              <div className="node-operator-box-item" onClick={this.outputJson}>设置</div>
+              <div className="node-operator-box-item" onClick={this.setYesOutput}>输出「 yes 」</div>
+              <div className="node-operator-box-item" onClick={this.setNoOutput}>输出「 no 」</div>
               <div className="node-operator-box-item item-red" onClick={this.deleteNode}>删除</div>
+              <div className="node-operator-box-item" onClick={this.startNode}>启用</div>
+              <div className="node-operator-box-item item-red" onClick={this.stopNode}>禁用</div>
             </div>
             :''
         }
