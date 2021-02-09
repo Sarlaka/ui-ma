@@ -2,7 +2,7 @@
  * @Author: duchengdong
  * @Date: 2021-02-08 10:28:41
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-08 16:08:03
+ * @LastEditTime: 2021-02-09 10:36:54
  * @Description: 
  */
 import {
@@ -46,7 +46,7 @@ export default function defineYesEdge(currentNode) {
         }
     })
 
-    yesEdge.appendLabel({
+    yesEdge.setLabels({
         attrs: {
             text: {
                 fill: configData[1].color,

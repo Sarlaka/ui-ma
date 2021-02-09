@@ -2,7 +2,7 @@
  * @Author: duchengdong
  * @Date: 2021-02-01 11:56:34
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-08 20:07:02
+ * @LastEditTime: 2021-02-09 10:49:42
  * @Description: 
  */
 import React,{Component} from 'react';
@@ -103,7 +103,6 @@ class App extends Component {
         highlight: true,
         snap: true,
         createEdge() {
-          console.log(1)
           return createNormalEdge()
         },
         validateMagnet({
@@ -154,7 +153,7 @@ class App extends Component {
 
     // 连线事件
     graph.on('edge:connected', (args) => {
-      console.log('连线事件')
+      console.log('edge:connected')
       const edge = args.edge
       const node = args.currentCell
       const elem = args.currentMagnet
@@ -250,7 +249,7 @@ class App extends Component {
       e
     }) => {
       // 空白处点击
-      console.log('空白处点击')
+      console.log('blank:mousedown')
       e.stopPropagation()
       this.hideBox()
     })
@@ -316,7 +315,6 @@ class App extends Component {
   }
   hideBox = ()=>{
     // 隐藏设置盒子
-    console.log('111')
     this.setState({
       boxPosition:{
         x: 0,
@@ -387,7 +385,7 @@ class App extends Component {
     edges.forEach(edge => {
       let data = edge.getData()
       if(data.disable){
-        // 如果节点已经被禁用，判断是否启用
+        // 如果边已经被禁用，判断是否启用
         let neighbors = graph.getNeighbors(edge)
         console.log(neighbors)
         // 判断边的相邻节点的状态
