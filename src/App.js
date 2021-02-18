@@ -9,6 +9,8 @@ import React,{Component} from 'react';
 import { Graph,Addon,Shape, Cell,Dom,FunctionExt} from '@antv/x6';
 import { Tooltip } from 'antd';
 import 'antd/lib/tooltip/style/css';
+
+import Modaltext from '../src/components/Modal/index'
 // 引入节点配置文件
 // import './components/Graph';
 import createUserNode from './components/Node/createUserNode'
@@ -493,6 +495,7 @@ class App extends Component {
     const { boxPosition,boxShow,}= this.state
     return (
       <div id='container' className="app">
+        <Modaltext></Modaltext> 
         <div className="app-content" ref={this.refContainer}></div>
         {
             boxShow
