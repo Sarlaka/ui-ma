@@ -11,6 +11,10 @@ import { Tooltip } from 'antd';
 import 'antd/lib/tooltip/style/css';
 
 import Modaltext from '../src/components/Modal/index'
+import ModalOne from '../src/components/ModalOne/index'
+import ModalTwo from '../src/components/ModalTwo/index'
+
+
 // 引入节点配置文件
 // import './components/Graph';
 import createUserNode from './components/Node/createUserNode'
@@ -21,6 +25,7 @@ import DragNode from './components/DragNode'
 import {GROUP_USER,GROUP_EVENT,GROUP_ACTION,GROUP_LOGIC} from 'utils/constants'
 import {createNormalEdge,createYesEdge,createNoEdge} from './components/Edge'
 import './App.css';
+
 
 const {Dnd,Stencil } = Addon
 const { Rect, Circle } = Shape
@@ -495,7 +500,9 @@ class App extends Component {
     const { boxPosition,boxShow,}= this.state
     return (
       <div id='container' className="app">
-        <Modaltext></Modaltext> 
+        <Modaltext></Modaltext>
+        <ModalOne></ModalOne> 
+        <ModalTwo></ModalTwo>
         <div className="app-content" ref={this.refContainer}></div>
         {
             boxShow

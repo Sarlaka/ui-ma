@@ -1,0 +1,32 @@
+.modal-box{
+    width: 608px;
+    height: 481px;
+}
+.checkbook-select{
+    color:#4173FF;
+    font-size: 14px;  
+}
+.checkbook-icon{
+    color:#4173FF;
+    font-size: 14px;
+    margin-right: 15px;
+}
+ .modal-box-input{
+    width: 100px;
+    height: 36px;
+    margin-right: 5px;
+    margin-left: 15px;
+   
+}
+.modal-box-item{
+    margin-left: 65px;
+}
+.modal-box-lastitem{
+    margin-left: 80px;
+
+}
+.modal-box-lastinput{
+    width: 270px;
+    margin-left: 8px;
+    margin-right: 10px;
+}

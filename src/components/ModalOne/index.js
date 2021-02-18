@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Modal, Button, Form, Input, Checkbox, Select } from 'antd';
 import  Trees  from '../Trees/index'
 import "antd/dist/antd.css"
-import { RightOutlined } from '@ant-design/icons';
-import './modal.css'
+import { RightOutlined,FormOutlined } from '@ant-design/icons';
+import './modalone.css'
 
 
 const formItemLayout = {
@@ -16,23 +16,18 @@ const formItemLayout = {
 };
 
 const { Option } = Select;
-const Modaltext = () => {
+const ModalOne = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [showUserModal, setShowUserModal] = useState(false)
 
     const handleOk = () => {
         setIsModalVisible(false);
     };
-    const handleOkModal = () => {
-        setShowUserModal(false);
-    };
+  
 
     const handleCancel = () => {
         setIsModalVisible(false);
     };
-    const handleCancelModal = () => {
-        setShowUserModal(false);
-    };
+ 
 
 
     function onChange(value) {
@@ -50,9 +45,7 @@ const Modaltext = () => {
     function onSearch(val) {
         console.log('search:', val);
     }
-    const showUserModalFn = () => {
-        setShowUserModal(true);
-    }
+ 
 
     return (
         <>
@@ -68,14 +61,14 @@ const Modaltext = () => {
             >
                 <Form.Item
                     {...formItemLayout}
-                    name="互动类型"
-                    label="互动类型"
+                    name="变更类型"
+                    label="变更类型"
                 >
 
                     <Select
                         showSearch
                         style={{ width: '100%' }}
-                        placeholder="客户与指定成员成为好友"
+                        placeholder="客户与任意成员成为好友"
                         optionFilterProp="children"
                         onChange={onChange}
                         onFocus={onFocus}
@@ -98,7 +91,7 @@ const Modaltext = () => {
                     <Select
                         showSearch
                         style={{ width: '100%' }}
-                        placeholder="无条件"
+                        placeholder="在某事件达成"
                         optionFilterProp="children"
                         onChange={onChange}
                         onFocus={onFocus}
@@ -113,6 +106,27 @@ const Modaltext = () => {
                         <Option value="tom">Tom</Option>
                     </Select>
                 </Form.Item>
+                <Form.Item
+                    className='modal-box-item'
+                >
+                    <Input
+                    className='modal-box-input'
+                    placeholder=" 请输入"
+                    ></Input>
+                    天
+                     <Input
+                    className='modal-box-input'
+                    placeholder=" 请输入"
+                    ></Input>
+                    时
+                     <Input
+                    className='modal-box-input'
+                    placeholder=" 请输入"
+                    ></Input>
+                    分
+                   
+                </Form.Item>
+                
                 <Form.Item
                     {...formItemLayout}
                     name="生效条件"
@@ -121,7 +135,7 @@ const Modaltext = () => {
                     <Select
                         showSearch
                         style={{ width: '100%' }}
-                        placeholder="无限制"
+                        placeholder="累计达到数"
                         optionFilterProp="children"
                         onChange={onChange}
                         onFocus={onFocus}
@@ -137,31 +151,35 @@ const Modaltext = () => {
                     </Select>
                 </Form.Item>
                 <Form.Item
-                    {...formItemLayout}
-                    name="选择成员"
-                    label="选择成员"
+                    className='modal-box-lastitem'
+                   
                 >
-                   
-                    <span  
-                    onClick={showUserModalFn}
-                    className="checkbook-select"
+                    <Select
+                        showSearch
+                        style={{ width: 90 }}
+                        placeholder="等于"
+                        optionFilterProp="children"
+                        onChange={onChange}
+                        onFocus={onFocus}
+                        onBlur={onBlur}
+                        onSearch={onSearch}
+                        filterOption={(input, option) =>
+                            option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                        }
                     >
-                        选择成员 >
-                    </span>
-                    <span>
-                        共 16 个标签
-                    </span>
-                   
-                   
-                    <Modal className='ModalTrees' title="选择成员" visible={showUserModal} onOk={handleOkModal} onCancel={handleCancelModal}>
-                       <Trees></Trees>
-                    </Modal>
-                   
-                    
+                        <Option value="jack">Jack</Option>
+                        <Option value="lucy">Lucy</Option>
+                        <Option value="tom">Tom</Option>
+                    </Select>
+                    <Input className='modal-box-lastinput'>
+                    </Input>
+                    <FormOutlined style={{color:"blue"}}/>
                 </Form.Item>
+             
+             
 
             </Modal>
         </>
     );
 }
-export default Modaltext
+export default ModalOne
