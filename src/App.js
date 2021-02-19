@@ -2,7 +2,7 @@
  * @Author: duchengdong
  * @Date: 2021-02-01 11:56:34
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-19 14:31:50
+ * @LastEditTime: 2021-02-19 14:45:29
  * @Description: 
  */
 import React,{Component} from 'react';
@@ -538,7 +538,7 @@ class App extends Component {
             :''
         }
         {/* <div className="app-stencil" ref={this.refStencil} /> */}
-        <div className="dnd-pannel" ref={this.refStencil}>
+        <div className="dnd-pannel">
           {
             sideData.map((v,i) => {
               return (

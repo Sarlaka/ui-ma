@@ -7,7 +7,7 @@
     height: 100%;
 }
 
-.flow-guide-step{
+.flow-guide-step {
     width: 144px;
     height: 144px;
     text-align: center;
@@ -16,8 +16,57 @@
 .flow-guide {
     display: flex;
     align-items: center;
+    position: absolute;
+    left: 50%;
+    top: 283px;
+    transform:translateX(-50%);
 }
 
-.flow-guide-arrow{
+.flow-guide-arrow {
     margin: 0 10px;
+}
+
+.flow-guide-step {
+   padding-top: 48px;
+   text-align: center;
+}
+
+.flow-guide-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #272E42;
+    line-height: 24px;
+}
+
+.flow-guide-desc {
+    width: 85px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #5E6576;
+    line-height: 20px;
+    margin: 4px auto 0;
+}
+
+.flow-guide-step:first-child .flow-guide-text{
+    text-indent: -12px;
+}
+
+.flow-guide-step:first-child .flow-guide-desc{
+    margin-left: 24px;
+}
+
+.action-guide {
+    position: absolute;
+    top: 99px;
+    right: 0px;
+}
+
+.action-guide-text {
+    width: 108px;
+    height: 34px;
+    margin: 82px 36px 0 0;
+    font-size: 12px;
+    font-weight: 400;
+    color: #5E6576;
+    float: left;
 }
