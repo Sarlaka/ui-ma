@@ -2,10 +2,11 @@
  * @Author: duchengdong
  * @Date: 2021-02-01 11:56:34
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-09 10:49:42
+ * @LastEditTime: 2021-02-19 14:31:50
  * @Description: 
  */
 import React,{Component} from 'react';
+import ReactDOM from 'react-dom';
 import { Graph,Addon,Shape, Cell,Dom,FunctionExt} from '@antv/x6';
 import { Tooltip } from 'antd';
 import 'antd/lib/tooltip/style/css';
@@ -16,8 +17,12 @@ import createEventNode from './components/Node/createEventNode'
 import createActionNode from './components/Node/createActionNode'
 import createLogicNode from './components/Node/createLogicNode'
 import DragNode from './components/DragNode'
-import {GROUP_USER,GROUP_EVENT,GROUP_ACTION,GROUP_LOGIC} from 'utils/constants'
+import {GROUP_USER,GROUP_EVENT,GROUP_ACTION,GROUP_LOGIC, USER_INFO,USER_ATTR,GROUP_ATTR,AB_TEST} from 'utils/constants'
+import sideData from 'mock/sideData'
 import {createNormalEdge,createYesEdge,createNoEdge} from './components/Edge'
+import {createDragUserNode,createDragEventNode,createDragActionNode,createDragLogicNode} from './components/DragNode/createDragNode'
+import NewGuide from './components/NewGuide'
+import {getPortTipText} from './utils/portUtil'
 import './App.css';
 
 const {Dnd,Stencil } = Addon
@@ -33,7 +38,8 @@ class App extends Component {
         x: 0,
         y: 0
       },
-      currentNode: null
+      currentNode: null,
+      isNew: false
     }
     this.refContainer = React.createRef();
     this.refStencil = React.createRef();
@@ -42,6 +48,7 @@ class App extends Component {
     const graph = new Graph({
       container: this.refContainer.current,
       grid: false,
+      background: {color:'#F7F8F9'},
       snapline: {
         enabled: true,
         sharp: false,
@@ -61,39 +68,41 @@ class App extends Component {
       },
       onPortRendered(args) {
         // console.log(args)
-        // const port = args.port
-        // const contentSelectors = args.contentSelectors
-        // const container = contentSelectors && contentSelectors.content
-        // console.log(port.connected)
-        // if (container) {
-        //   ReactDOM.render(
-        //     <Tooltip title="port">
-        //       <div className={`my-port${port.connected ? ' connected' : ''}`} />,
-        //     </Tooltip>,
-        //     container,
-        //   )
-        // }
+        const port = args.port
+        const data =  args.node.getData()
+        console.log(data,args.port.group)
+        const contentSelectors = args.contentSelectors
+        const container = contentSelectors && contentSelectors.content
+        let txt = getPortTipText(args.port.group,data.type)
+        if (container) {
+          ReactDOM.render(
+            <Tooltip title={txt}>
+              <div className={`my-port${port.connected ? ' connected' : ''}`} />
+            </Tooltip>,
+            container,
+          )
+        }
       },
-      highlighting: {
-        nodeAvailable: {
-          name: 'className',
-          args: {
-            className: 'available',
-          },
-        },
-        magnetAvailable: {
-          name: 'className',
-          args: {
-            className: 'available',
-          },
-        },
-        magnetAdsorbed: {
-          name: 'className',
-          args: {
-            className: 'adsorbed',
-          },
-        },
-      },
+      // highlighting: {
+      //   nodeAvailable: {
+      //     name: 'className',
+      //     args: {
+      //       className: 'available',
+      //     },
+      //   },
+      //   magnetAvailable: {
+      //     name: 'className',
+      //     args: {
+      //       className: 'available',
+      //     },
+      //   },
+      //   magnetAdsorbed: {
+      //     name: 'className',
+      //     args: {
+      //       className: 'adsorbed',
+      //     },
+      //   },
+      // },
       connecting: {
         anchor: 'center',
         // connectionPoint: 'anchor',
@@ -102,13 +111,25 @@ class App extends Component {
         allowBlank: false,
         highlight: true,
         snap: true,
-        createEdge() {
+        createEdge(args) {
+          let type = args.sourceCell.getData().type
+          let portType = args.sourceMagnet.getAttribute('port-group')
+          if(type===USER_INFO||type===USER_ATTR||type===GROUP_ATTR||type===AB_TEST){
+            // 有A/B输出的特殊处理
+            if(portType==='outRight'){
+              return createYesEdge(type)
+            }
+            if(portType==='outBottom'){
+              return createNoEdge(type)
+            }
+          }
           return createNormalEdge()
         },
         validateMagnet({
           magnet
         }) {
-          return magnet.getAttribute('port-group') !== 'in'
+          // console.log(magnet.getAttribute('port-group'),'***')
+          return magnet.getAttribute('port-group') !== 'outRight'|| magnet.getAttribute('port-group') !== 'outBottom'
         },
         validateConnection({
           sourceView,
@@ -117,30 +138,30 @@ class App extends Component {
           targetMagnet
         }) {
           // // 只能从输出链接桩创建连接
-          // if (!sourceMagnet || sourceMagnet.getAttribute('port-group') === 'in') {
-          //   return false
-          // }
-
-          // // 只能连接到输入链接桩
-          // if (!targetMagnet || targetMagnet.getAttribute('port-group') !== 'in') {
-          //   return false
-          // }
-
-          // // 判断目标链接桩是否可连接
-          // const portId = targetMagnet.getAttribute('port')
-          // const node = targetView.cell
-          // console.log(portId,node)
-          // const port = node.getPort(portId)
-          // if (port && port.connected) {
-          //   return false
-          // }
-          // return true
-          if (sourceView === targetView) {
+          if (!sourceMagnet || sourceMagnet.getAttribute('port-group') === 'inTop'||sourceMagnet.getAttribute('port-group') === 'inLeft') {
             return false
           }
-          if (!sourceMagnet || !targetMagnet) {
+
+          // 只能连接到输入链接桩
+          if (!targetMagnet || targetMagnet.getAttribute('port-group') === 'outRight'||targetMagnet.getAttribute('port-group') === 'outBottom') {
             return false
           }
+          
+          // 判断是否已经连接
+          let edges = graph.getConnectedEdges(sourceView.cell)
+          let isConnected = edges.find(edge => {
+            let sId = edge.getSourceCellId()
+            if(sId&&targetView.cell.id==sId){
+              return true
+            }
+            return false
+          })
+
+          if(isConnected){
+            console.log(edges)
+            return false
+          }
+
           return true
         },
       },
@@ -287,10 +308,15 @@ class App extends Component {
       target: graph,
       scaled: false,
       animation: true,
-      validateNode(droppingNode, options) {
-        // console.log(droppingNode.scale)
-        // 清除画布背景
-        // graph.clearBackground()
+      validateNode:(droppingNode, options)=> {
+        console.log(droppingNode)
+        // 清除新建指导
+        const {isNew} = this.state
+        if(isNew){
+          this.setState({
+            isNew: false
+          })
+        }
         return droppingNode.shape === 'html' ?
           new Promise((resolve) => {
             const {
@@ -306,11 +332,33 @@ class App extends Component {
             }, 3000)
           }) :
           true
+      },
+      getDropNode:(dropNode,options)=>{
+        console.log(dropNode)
+        let metaData = dropNode.getData().metaData
+        let node = null;
+        switch (metaData.group) {
+          case GROUP_USER:
+            node = createUserNode(graph,metaData);
+            break;
+          case GROUP_EVENT:
+            node = createEventNode(graph,metaData);
+            break;
+          case GROUP_ACTION:
+            node = createActionNode(graph,metaData);
+            break;
+          case GROUP_LOGIC:
+            node = createLogicNode(graph,metaData);
+            break;
+          default:
+            return;
+        }
+        return node
       }
     })
 
     this.setState({
-      graph,dnd
+      graph,dnd,isNew:true
     })
   }
   hideBox = ()=>{
@@ -336,45 +384,26 @@ class App extends Component {
 
   startDragNode = (e) => {
     const {graph,dnd} = this.state
-    // 节点拖拽开始
+    // // 节点拖拽开始
     const metaData = e.currentTarget.dataset || {};
     let node = null;
     switch (metaData.group) {
       case GROUP_USER:
-        node = createUserNode(graph,metaData);
+        node = createDragUserNode(graph,metaData);
         break;
       case GROUP_EVENT:
-        node = createEventNode(graph,metaData);
+        node = createDragEventNode(graph,metaData);
         break;
       case GROUP_ACTION:
-        node = createActionNode(graph,metaData);
+        node = createDragActionNode(graph,metaData);
         break;
       case GROUP_LOGIC:
-        node = createLogicNode(graph,metaData);
+        node = createDragLogicNode(graph,metaData);
         break;
       default:
         return;
     }
     dnd.start(node, e.nativeEvent)
-  }
-
-  // 设置yes输出
-  setYesOutput = (e) => {
-    // 设置输出
-    e.stopPropagation()
-    const {graph,currentNode} = this.state
-    const edge = createYesEdge(currentNode)
-    graph.addEdge(edge)
-    this.hideBox()
-  }
-
-  // 设置no输出
-  setNoOutput = (e) => {
-    e.stopPropagation()
-    const {graph,currentNode} = this.state
-    const edge = createNoEdge(currentNode)
-    graph.addEdge(edge)
-    this.hideBox()
   }
 
   // 启用节点
@@ -486,20 +515,22 @@ class App extends Component {
 
   outputJson = ()=> {
     const {graph} = this.state
-    console.log(graph.toJSON())
+    console.log(JSON.stringify(graph.toJSON()))
   }
 
   render(){
-    const { boxPosition,boxShow,}= this.state
+    const { boxPosition,boxShow,isNew}= this.state
     return (
       <div id='container' className="app">
-        <div className="app-content" ref={this.refContainer}></div>
+        <div className="app-content" ref={this.refContainer}>
+          {
+            isNew?<NewGuide />:null
+          }
+        </div>
         {
             boxShow
             ?<div className="node-operator-box" style={{left:boxPosition.x,top:boxPosition.y}}>
               <div className="node-operator-box-item" onClick={this.outputJson}>设置</div>
-              <div className="node-operator-box-item" onClick={this.setYesOutput}>输出「 yes 」</div>
-              <div className="node-operator-box-item" onClick={this.setNoOutput}>输出「 no 」</div>
               <div className="node-operator-box-item item-red" onClick={this.deleteNode}>删除</div>
               <div className="node-operator-box-item" onClick={this.startNode}>启用</div>
               <div className="node-operator-box-item item-red" onClick={this.stopNode}>禁用</div>
@@ -507,83 +538,33 @@ class App extends Component {
             :''
         }
         {/* <div className="app-stencil" ref={this.refStencil} /> */}
-        <div className="dnd-pannel">
-          <div className="dnd-group">
-            <div className="dnd-group-title">对象</div>
-            <div className="dnd-group-box">
-              <DragNode 
-                group={GROUP_USER}
-                onMouseDown={this.startDragNode}
-                title="客户"
-                color="#4173FF"
-                iconUrl='./assets/shapeIcon/user.png'
-              />
-              <DragNode 
-                group={GROUP_USER}
-                onMouseDown={this.startDragNode}
-                title="客户"
-                color="#5BC9A4"
-                iconUrl='./assets/shapeIcon/user.png'
-              />
-            </div>
-          </div>
-          <div className="dnd-group">
-            <div className="dnd-group-title">事件</div>
-            <div className="dnd-group-box">
-              <DragNode 
-                group={GROUP_EVENT}
-                onMouseDown={this.startDragNode}
-                title="企微客户事件"
-                color="#5BC9A4"
-                iconUrl='./assets/shapeIcon/qywechat.png'
-              /> 
-              <DragNode 
-                group={GROUP_EVENT}
-                onMouseDown={this.startDragNode}
-                title="企微客户事件"
-                color="#4173FF"
-                iconUrl='./assets/shapeIcon/qywechat.png'
-              />            
-            </div>
-          </div>
-          <div className="dnd-group">
-            <div className="dnd-group-title">动作</div>
-            <div className="dnd-group-box">
-              <DragNode 
-                group={GROUP_ACTION}
-                onMouseDown={this.startDragNode}
-                title="设置客户信息"
-                color="#5BC9A4"
-                iconUrl='./assets/shapeIcon/qywechat.png'
-              /> 
-              <DragNode 
-                group={GROUP_ACTION}
-                onMouseDown={this.startDragNode}
-                title="客户群事件"
-                color="#4173FF"
-                iconUrl='./assets/shapeIcon/qywechat.png'
-              />            
-            </div>
-          </div>
-          <div className="dnd-group">
-            <div className="dnd-group-title">逻辑</div>
-            <div className="dnd-group-box">
-              <DragNode 
-                group={GROUP_LOGIC}
-                onMouseDown={this.startDragNode}
-                title="合并"
-                color="#5BC9A4"
-                iconUrl='./assets/shapeIcon/qywechat.png'
-              /> 
-              <DragNode 
-                group={GROUP_LOGIC}
-                onMouseDown={this.startDragNode}
-                title="延时"
-                color="#4173FF"
-                iconUrl='./assets/shapeIcon/qywechat.png'
-              />            
-            </div>
-          </div>
+        <div className="dnd-pannel" ref={this.refStencil}>
+          {
+            sideData.map((v,i) => {
+              return (
+                <div className="dnd-group" key={i}>
+                  <div className="dnd-group-title">{v.title}</div>
+                  <div className="dnd-group-box">
+                    {
+                      v.children.map(u => {
+                        return (
+                          <DragNode 
+                            key={u.type}
+                            group={v.group}
+                            onMouseDown={this.startDragNode}
+                            type={u.type}
+                            title={u.title}
+                            color={u.color}
+                            iconUrl={u.iconUrl}
+                          />
+                        )
+                      })
+                    }
+                  </div>
+                </div>
+              )
+            })
+          }
         </div>
       </div>
     );

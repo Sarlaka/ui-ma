@@ -2,14 +2,14 @@
  * @Author: duchengdong
  * @Date: 2021-02-05 17:45:40
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-08 20:08:08
+ * @LastEditTime: 2021-02-18 18:42:12
  * @Description: 
  */
 
 import {
     Dom
 } from '@antv/x6'
-import {PORTS} from './config'
+import {PORTS,PORT_MARKUP} from './config'
 
 export default function createUserNode(graph,metaData) {
     console.log(metaData)
@@ -46,6 +46,7 @@ export default function createUserNode(graph,metaData) {
             foBody: {
                 style:{
                     paddingRight: '24px',
+                    paddingTop: '19px'
                 },
                 event: 'node:contextmenu',
             },
@@ -99,9 +100,16 @@ export default function createUserNode(graph,metaData) {
                 }],
             },
         ],
-        ports: PORTS,
+        portMarkup: PORT_MARKUP,
+        ports: {
+            ...PORTS,
+            items: [{
+                group: 'outRight',
+            }]
+        },
         data: {
             metaData,
+            type: metaData.type,
             disable: false 
         }
     })

@@ -2,7 +2,7 @@
  * @Author: duchengdong
  * @Date: 2021-02-07 14:13:14
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-08 20:08:16
+ * @LastEditTime: 2021-02-18 18:50:13
  * @Description: 
  */
 /*
@@ -16,7 +16,7 @@
 import {
     Dom
 } from '@antv/x6'
-import {PORTS} from './config'
+import {PORTS,PORT_MARKUP} from './config'
 
 export default function createActionNode(graph,metaData) {
     return graph.createNode({
@@ -46,6 +46,9 @@ export default function createActionNode(graph,metaData) {
                 height: 124,
             },
             foBody: {
+                style:{
+                    paddingTop: '19px'
+                },
                 event: 'node:contextmenu',
             },
             icon: {
@@ -94,9 +97,11 @@ export default function createActionNode(graph,metaData) {
                 }],
             },
         ],
+        portMarkup: PORT_MARKUP,
         ports: PORTS,
         data: {
             metaData,
+            type: metaData.type,
             disable: false 
         }
     })

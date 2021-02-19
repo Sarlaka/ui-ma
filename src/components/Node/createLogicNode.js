@@ -2,14 +2,14 @@
  * @Author: duchengdong
  * @Date: 2021-02-07 14:38:04
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-08 15:11:25
+ * @LastEditTime: 2021-02-18 18:49:12
  * @Description: 
  */
 
 import {
     Dom
 } from '@antv/x6'
-import {PORTS} from './config'
+import {PORTS,PORT_MARKUP} from './config'
 
 export default function createLogicNode(graph,metaData) {
     return graph.createNode({
@@ -42,6 +42,9 @@ export default function createLogicNode(graph,metaData) {
                 height: 124,
             },
             foBody: {
+                style:{
+                    paddingTop: '19px'
+                },
                 event: 'node:contextmenu',
             },
             icon: {
@@ -94,9 +97,11 @@ export default function createLogicNode(graph,metaData) {
                 }],
             },
         ],
+        portMarkup: PORT_MARKUP,
         ports: PORTS,
         data: {
             metaData,
+            type: metaData.type,
             disable: false 
         }
     })

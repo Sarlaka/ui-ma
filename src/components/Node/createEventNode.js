@@ -2,14 +2,14 @@
  * @Author: duchengdong
  * @Date: 2021-02-07 13:40:13
  * @LastEditors: duchengdong
- * @LastEditTime: 2021-02-08 15:11:32
+ * @LastEditTime: 2021-02-18 18:49:04
  * @Description: 
  */
 
 import {
     Dom
 } from '@antv/x6'
-import {PORTS} from './config'
+import {PORTS,PORT_MARKUP} from './config'
 
 export default function createEventNode(graph,metaData) {
     return graph.createNode({
@@ -97,9 +97,11 @@ export default function createEventNode(graph,metaData) {
                 }],
             },
         ],
+        portMarkup: PORT_MARKUP,
         ports: PORTS,
         data: {
             metaData,
+            type: metaData.type,
             disable: false 
         }
     })

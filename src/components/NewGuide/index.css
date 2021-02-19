@@ -1,0 +1,23 @@
+/* 新手指导 */
+.app-guide {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.flow-guide-step{
+    width: 144px;
+    height: 144px;
+    text-align: center;
+}
+
+.flow-guide {
+    display: flex;
+    align-items: center;
+}
+
+.flow-guide-arrow{
+    margin: 0 10px;
+}

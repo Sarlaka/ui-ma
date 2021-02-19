@@ -2,6 +2,7 @@
   font-family: sans-serif;
   padding: 0;
   display: flex;
+  height: 100vh;
 }
 
 .app-stencil {
@@ -53,6 +54,10 @@
   border-bottom: 1px solid #EEF0F4;
 }
 
+.dnd-group:last-child {
+  border: 0 none;
+}
+
 .dnd-group-title {
   font-size: 14px;
   font-family: PingFangSC-Medium, PingFang SC;
@@ -80,27 +85,6 @@
 
 .x6-node [magnet="true"][port-group="in"] {
   cursor: move;
-}
-
-.my-port {
-  width: 100%;
-  height: 100%;
-  border: 1px solid #808080;
-  border-radius: 100%;
-  background: #eee;
-}
-
-.my-port.connected {
-  display: none;
-  width: 0;
-  height: 0;
-  margin-top: 5px;
-  margin-left: 1px;
-  border-width: 5px 4px 0;
-  border-style: solid;
-  border-color: #808080 transparent transparent;
-  border-radius: 0;
-  background-color: transparent;
 }
 
 .x6-port-body.available {
@@ -175,18 +159,14 @@
 
 .dnd-group-box {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
 }
 
 /* icon-shape */
-.x6-node foreignobject{
+.x6-node foreignobject {
   cursor: pointer;
-}
-
-.x6-node foreignobject>body {
-  padding-top: 19px;
 }
 
 .icon-shape {
@@ -255,7 +235,7 @@
   top: 0px;
 }
 
-.node-operator-box-item{
+.node-operator-box-item {
   height: 28px;
 }
 
@@ -271,7 +251,7 @@
   display: none;
 }
 
-.x6-node:hover{
+.x6-node:hover {
   opacity: 0.8;
 }
 
@@ -281,4 +261,12 @@
   top: 0;
   width: 100%;
   height: 100%;
+}
+/* 链接桩样式 */
+.my-port {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #808080;
+  border-radius: 100%;
+  background: #fff;
 }
